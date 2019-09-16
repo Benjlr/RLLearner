@@ -4,12 +4,14 @@ import numpy as np
 
 
 thArray = pd.read_csv('C:/Temp/test.csv')
+thArray2 = pd.read_csv('C:/Users/rober/source/repos/RLLearner/returns.csv')
+returns =thArray2['returns']
 closes = thArray['assetClose']
 print(closes[:4])
 #returns = np.array[range(len(closes))]
 
 from statsmodels.tsa.stattools import adfuller
-X = closes.values
+X = returns.values
 result = adfuller(X)
 print('ADF Statistic: %f' % result[0])
 print('p-value: %f' % result[1])
