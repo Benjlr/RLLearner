@@ -6,7 +6,7 @@ from mpl_finance import candlestick_ochl as candlestick
 
 
 def date2num(date):
-  converter = mdates.strpdate2num('%Y-%m-%d')
+  converter = mdates.strpdate2num('%d/%m/%Y')
   return converter(date)
 
 
@@ -52,7 +52,7 @@ class StockTradingGraph:
 
         self._render_net_worth(current_step, net_worth, window_size, dates)
         self._render_price(current_step, net_worth, window_size, dates, step_range)
-        self._render_volume(current_step, net_worth, dates, step_range)
+        #self._render_volume(current_step, net_worth, dates, step_range)
         self._render_trades(current_step, trades, step_range)
 
         # Format the date ticks to be more easily read
@@ -95,17 +95,17 @@ class StockTradingGraph:
 
         # Format data for OHCL candlestick graph
         candlesticks = zip(dates,
-        self.df['Open'].values[step_range],  
-        self.df['Close'].values[step_range],
-        self.df['High'].values[step_range], 
-        self.df['Low'].values[step_range])
+        self.df['assetOpen'].values[step_range],  
+        self.df['assetClose'].values[step_range],
+        self.df['assetHigh'].values[step_range], 
+        self.df['assetLow'].values[step_range])
 
         # Plot price using candlestick graph from mpl_finance
         candlestick(self.price_ax, candlesticks, width=1,
         colorup=UP_COLOR, colordown=DOWN_COLOR)
         last_date = date2num(self.df['Date'].values[current_step])
-        last_close = self.df['Close'].values[current_step]
-        last_high = self.df['High'].values[current_step]
+        last_close = self.df['assetClose'].values[current_step]
+        last_high = self.df['assetHigh'].values[current_step]
 
         # Print the current price to the price axis
         self.price_ax.annotate('{0:.2f}'.format(last_close),
@@ -145,10 +145,10 @@ class StockTradingGraph:
         for trade in trades:
             if trade['step'] in step_range:
                 date = date2num(self.df['Date'].values[trade['step']])
-                high = self.df['High'].values[trade['step']]
-                low = self.df['Low'].values[trade['step']]
+                high = self.df['assetHigh'].values[trade['step']]
+                low = self.df['assetLow'].values[trade['step']]
             
-            if trade['type'] == 'buy':
+            if trade['type'] == 'long':
                 high_low = low
                 color = UP_TEXT_COLOR
             else:
