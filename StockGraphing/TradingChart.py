@@ -13,11 +13,11 @@ from mpl_finance import candlestick_ochl as candlestick
 style.use('ggplot')
 register_matplotlib_converters()
 
-VOLUME_CHART_HEIGHT = 0.33
-
 
 class TradingChart:
-    """An OHLCV trading visualization using matplotlib made to render gym environments"""
+    """Copyright TruffleCo Industries 2019
+        Authoriser: Benjamin Roberts (CEO, CTO, MD)
+        For All Those Truffling Needs"""
 
     def __init__(self, df):
         self.df = df
@@ -39,6 +39,7 @@ class TradingChart:
 
         # Show the graph without blocking the rest of the program
         plt.show(block=False)
+
 
     def _render_net_worth(self, step_range, times, current_step, net_worths, benchmarks):
         # Clear the frame rendered last step
@@ -67,6 +68,7 @@ class TradingChart:
 
         # Add space above and below min/max net worth
         self.net_worth_ax.set_ylim(min(net_worths) / 1.25, max(net_worths) * 1.25)
+
 
     def _render_benchmarks(self, step_range, times, benchmarks):
         colors = ['orange', 'cyan', 'purple', 'blue',
@@ -125,6 +127,7 @@ class TradingChart:
         self.volume_ax.set_ylim(0, max(volume) / VOLUME_CHART_HEIGHT)
         self.volume_ax.yaxis.set_ticks([])
 
+
     def _render_trades(self, step_range, trades):
         for trade in trades:
             if trade['step'] in range(sys.maxsize)[step_range]:
@@ -144,6 +147,7 @@ class TradingChart:
                                        xytext=(date, close),
                                        size="large",
                                        arrowprops=dict(headlength=25,headwidth=15,width=5, facecolor=color))
+
 
     def render(self, current_step, net_worths, benchmarks, trades, window_size=200):
         net_worth = round(net_worths[-1], 2)
@@ -171,6 +175,7 @@ class TradingChart:
 
         # Necessary to view frames before they are unrendered
         plt.pause(0.001)
+        
 
     def close(self):
         plt.close()

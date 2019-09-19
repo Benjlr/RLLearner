@@ -66,22 +66,54 @@ class TradingEnv(gym.Env):
 
         self.action_space = spaces.Box( np.array([-1,0.0]), np.array([1,1.0]))  # steer, gas, brake
         # may have to change this to reflect different obs space
-        self.observation_space = spaces.Box(np.array([-1.0, -1.0, -1.0,-1.0,-1.0,
-                                                        -1.0,-1.0,-50.0, -50.0, -5.0,
-                                                        -1.0,  -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0, -50.0, -50.0, -5.0, -1.0, 0.0]),
-                                            np.array([1.0, 1.0, 1.0,1.0,1.0,
-                                                        1.0,1.0,50.0, 50.0,5.0,
-                                                        1.0, 1.0, 1.0, 1.0,
-                                                        1.0, 1.0, 1.0, 50.0,50.0, 5.0, 1.0, 1.0]))
-        #self.observation_space = spaces.Box(np.array([0, 0, 0, 0, 0,
-         #                                               0,0,-50.0, -50.0, -5.0,
-           #                                             0,  0, 0, 0,
-             #                                           0, 0, 0, -50.0, -50.0, -5.0, -1.0, 0.0]),
-            #                                np.array([10000.0, 10000.0, 10000.0,10000.0,10000.0,
-                #                                        10000.0,10000.0,50.0, 50.0,5.0,
-              #                                          10000.0, 10000.0, 10000.0, 10000.0,
-                #                                        10000.0, 10000.0, 10000.0, 50.0,50.0, 5.0, 1.0, 1.0]))
+        self.observation_space = spaces.Box(np.array([
+                                                        -1.0,  #assetOpen
+                                                        -1.0,  #assetHigh
+                                                        -1.0,  #assetLow
+                                                        -1.0,  #assetClose
+                                                        -1.0,  #assetKeltnerHigh
+                                                        -1.0,  #assetKeltnerLow
+                                                        -1.0,  #assetKeltnerMA
+                                                        -50.0, #assetMACDFast
+                                                        -50.0, #assetMACDSlow
+                                                        -5.0,  #assetSigma
+                                                        -1.0,  #indexOpen
+                                                        -1.0,  #indexHigh
+                                                        -1.0,  #indexLow
+                                                        -1.0,  #indexClose
+                                                        -1.0,  #indexKeltnerHigh
+                                                        -1.0,  #indexKeltnerLow
+                                                        -1.0,  #indexKeltnerMA
+                                                        -50.0, #indexMACDFast
+                                                        -50.0, #indexMACDSlow
+                                                        -5.0,  #indexSigma
+                                                        -1.0,  #currentPosition
+                                                        0.0    #stopDistance
+                                                        ]),
+                                            np.array([
+                                                        1.0,  #assetOpen
+                                                        1.0,  #assetHigh
+                                                        1.0,  #assetLow
+                                                        1.0,  #assetClose
+                                                        1.0,  #assetKeltnerHigh
+                                                        1.0,  #assetKeltnerLow
+                                                        1.0,  #assetKeltnerMA
+                                                        50.0, #assetMACDFast
+                                                        50.0, #assetMACDSlow
+                                                        5.0,  #assetSigma
+                                                        1.0,  #indexOpen
+                                                        1.0,  #indexHigh
+                                                        1.0,  #indexLow
+                                                        1.0,  #indexClose
+                                                        1.0,  #indexKeltnerHigh
+                                                        1.0,  #indexKeltnerLow
+                                                        1.0,  #indexKeltnerMA
+                                                        50.0, #indexMACDFast
+                                                        50.0, #indexMACDSlow
+                                                        5.0,  #indexSigma
+                                                        1.0,  #currentPosition
+                                                        1.0   #stopDistance
+                                                        ]))
 
 
     def reset(self):
@@ -145,7 +177,7 @@ class TradingEnv(gym.Env):
             current_row['assetSigma'].values[1],
             index_stationary_open,
             index_stationary_high,
-            index_stationary_keltnerlow,
+            index_stationary_low,
             index_stationary_close,
             index_stationary_keltnerhigh,
             index_stationary_keltnerlow,
