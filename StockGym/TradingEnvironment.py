@@ -197,99 +197,7 @@ class TradingEnv(gym.Env):
         # Execute one time step within the environment
         self._take_action(action)
         self.current_step += 1
-        reward = 0
-        
-        openPrice = self.df.loc[self.current_step, "assetOpen"]
-        highPrice = self.df.loc[self.current_step, "assetHigh"]
-        lowPrice = self.df.loc[self.current_step, "assetLow"]
-        
-        if self.currently_long or self.currently_short:
-            self.days_in += 1
-
-
-        if self.currently_long and lowPrice < self.stop_value:
-            final_price = self.stop_value
-            if openPrice < self.stop_value:
-                final_price = openPrice
-            self.balance += (final_price - self.entry_price) * self.shares_held
-            
-
-            final_r = (final_price - self.entry_price) / self.entry_atr
-            self.lifetime_r += final_r
-            self.trades.append(
-                {'step': self.current_step,
-                'r_value': final_r,
-                'profit': final_r * self.entry_atr*self.shares_held,
-                'price':final_price,
-                'type': "exit_long"})
-            self.shares_held = None
-            self.currently_long = False
-            self.entry_atr = None
-            self.stop_value = None
-            self.entry_price = None
-            self.positioning = 0
-            reward = final_r
-            self.up_R += final_r
-            self.days_in = 0
-            self.num_trades += 1
-            
-        elif self.currently_short and highPrice > self.stop_value:
-            final_price = self.stop_value
-            if openPrice > self.stop_value:
-                final_price = openPrice
-            self.balance += (self.entry_price - final_price) * -self.shares_held
-            final_r = (self.entry_price - final_price) / self.entry_atr
-            self.lifetime_r += final_r
-
-            self.trades.append({'step': self.current_step,
-                    'r_value': final_r,
-                    'profit': final_r * self.entry_atr*self.shares_held,
-                    'price':final_price,
-                    'type': "exit_short"})
-            self.shares_held = None
-            self.currently_short = False
-            self.entry_atr = None
-            self.stop_value = None
-            self.entry_price = None
-            self.positioning = 0
-            reward = final_r
-            self.down_R += final_r
-            self.days_in = 0
-            self.num_trades += 1
-            
-        elif self.entering_long:
-            self.shares_held, self.stop_value = sg.enter_stock(1, 
-                                                                self.balance, 
-                                                                self.df.loc[self.current_step, "assetATR"], 
-                                                                openPrice, 
-                                                                self.risk)
-            self.entry_price = openPrice
-            self.entry_atr = (openPrice - self.stop_value)
-            self.entering_long = False
-            self.currently_long = True
-            self.positioning = 1
-            self.trades.append(
-                    {'step': self.current_step,
-                    'stop': self.stop_value,
-                    'price':openPrice,
-                    'type': "long"})
-        elif self.entering_short:
-            self.shares_held, self.stop_value = sg.enter_stock(-1,
-                                                                self.balance, 
-                                                                self.df.loc[self.current_step, "assetATR"], 
-                                                                openPrice,
-                                                                self.risk)                                                                
-            self.entry_price = openPrice
-            self.entry_atr = -(openPrice - self.stop_value)
-            self.entering_short = False
-            self.currently_short = True
-            self.positioning = -1
-            self.trades.append(
-                {'step': self.current_step,
-                'stop': self.stop_value,
-                'price':openPrice,
-                'type': "short"})
-        
+        reward = self._do_trades()
         
         self.net_worths.append(self.balance)
 
@@ -299,6 +207,7 @@ class TradingEnv(gym.Env):
             output = f'{self.balance}, {self.up_R}, {self.down_R}, {self.num_trades}'
             f.write(output)
             f.write("\n")
+                
         obs = self._next_observation()
         
         return obs, reward, done, {}
@@ -328,79 +237,105 @@ class TradingEnv(gym.Env):
         
 
     def _do_trades(self):
-        open = self.df.loc[self.current_step, "assetOpen"]
-        high = self.df.loc[self.current_step, "assetHigh"]
-        low = self.df.loc[self.current_step, "assetLow"]
-        
-        if self.currently_long and low < self.stop_value:
+        openPrice = self.df.loc[self.current_step, "assetOpen"]
+        highPrice = self.df.loc[self.current_step, "assetHigh"]
+        lowPrice = self.df.loc[self.current_step, "assetLow"]
+
+        if self.currently_long and lowPrice < self.stop_value:
             final_price = self.stop_value
-            if open < self.stop_value:
-                final_price = open
+
+            if openPrice < self.stop_value:
+                final_price = openPrice
+                
             self.balance += (final_price - self.entry_price) * self.shares_held
             final_r = (final_price - self.entry_price) / self.entry_atr
-            self.lifetime_r += final_r
+            self.lifetime_r += final_r                        
+            self.up_R += final_r
+            reward = final_r
+
+            self.trades.append(
+                {'step': self.current_step,
+                'r_value': final_r,
+                'profit': final_r * self.entry_atr*self.shares_held,
+                'price':final_price,
+                'type': "exit_long"})
+
             self.shares_held = None
             self.currently_long = False
             self.entry_atr = None
             self.stop_value = None
             self.entry_price = None
             self.positioning = 0
-            self.trades.append(
-                {'step': self.current_step,
-                'r_value': final_r,
-                'profit': final_r * self.entry_atr,
-                'price':final_price,
-                'type': "exit_long"})
-        elif self.currently_short and high > self.stop_value:
+            self.days_in = 0
+            self.num_trades += 1
+            
+        elif self.currently_short and highPrice > self.stop_value:
             final_price = self.stop_value
-            if open > self.stop_value:
-                final_price = open
-            self.balance += (self.entry_price - final_price) * self.shares_held
+
+            if openPrice > self.stop_value:
+                final_price = openPrice
+
+            self.balance += (self.entry_price - final_price) * -self.shares_held
             final_r = (self.entry_price - final_price) / self.entry_atr
             self.lifetime_r += final_r
+            self.down_R += final_r
+            reward = final_r
+
+            self.trades.append({'step': self.current_step,
+                    'r_value': final_r,
+                    'profit': final_r * self.entry_atr*self.shares_held,
+                    'price':final_price,
+                    'type': "exit_short"})
+
             self.shares_held = None
             self.currently_short = False
             self.entry_atr = None
             self.stop_value = None
             self.entry_price = None
             self.positioning = 0
-            self.trades.append({'step': self.current_step,
-                    'r_value': final_r,
-                    'profit': final_r * self.risked,
-                    'price':final_price,
-                    'type': "exit_short"})
+            self.days_in = 0
+            self.num_trades += 1
+            
         elif self.entering_long:
             self.shares_held, self.stop_value = sg.enter_stock(1, 
                                                                 self.balance, 
                                                                 self.df.loc[self.current_step, "assetATR"], 
-                                                                open, 
+                                                                openPrice, 
                                                                 self.risk)
-            self.entry_price = open
-            self.entry_atr = (open - self.stop_value)
+            self.entry_price = openPrice
+            self.entry_atr = (openPrice - self.stop_value)
             self.entering_long = False
             self.currently_long = True
             self.positioning = 1
+
             self.trades.append(
                     {'step': self.current_step,
                     'stop': self.stop_value,
-                    'price':open,
+                    'price':openPrice,
                     'type': "long"})
+
         elif self.entering_short:
             self.shares_held, self.stop_value = sg.enter_stock(-1,
                                                                 self.balance, 
                                                                 self.df.loc[self.current_step, "assetATR"], 
-                                                                open,
+                                                                openPrice,
                                                                 self.risk)                                                                
-            self.entry_price = open
-            self.entry_atr = -(open - self.stop_value)
+            self.entry_price = openPrice
+            self.entry_atr = -(openPrice - self.stop_value)
             self.entering_short = False
             self.currently_short = True
             self.positioning = -1
+
             self.trades.append(
                 {'step': self.current_step,
                 'stop': self.stop_value,
-                'price': open,
+                'price':openPrice,
                 'type': "short"})
+
+        if self.currently_long or self.currently_short:
+            self.days_in += 1   
+
+        return reward
                 
 
     def _render_to_file(self, filename='render.txt'):
@@ -421,8 +356,6 @@ class TradingEnv(gym.Env):
     def render(self, mode='human', close=False):
         if self.visualisation == None:
             self.visualisation = TradingChart(self.df)
+
         if self.current_step < len(self.df):
-            self.visualisation.render(self.current_step, 
-                                    self.net_worths,
-                                    None,
-                                    self.trades)
+            self.visualisation.render(self.current_step, self.net_worths, None, self.trades)
