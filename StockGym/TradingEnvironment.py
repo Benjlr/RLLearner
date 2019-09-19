@@ -52,6 +52,7 @@ class TradingEnv(gym.Env):
         self.net_worths = [self.balance]
         self.net_worths.append(self.balance)
         self.visualisation = None
+        self.entry_step = 0
 
         #0 initiate position, 1 move stop
         #low = [ -1, 0] high = [ 1, 1]
@@ -74,9 +75,9 @@ class TradingEnv(gym.Env):
                                                         -1.0,  #assetKeltnerHigh
                                                         -1.0,  #assetKeltnerLow
                                                         -1.0,  #assetKeltnerMA
-                                                        -50.0, #assetMACDFast
-                                                        -50.0, #assetMACDSlow
-                                                        -5.0,  #assetSigma
+                                                        -1.0, #assetMACDFast
+                                                        -1.0, #assetMACDSlow
+                                                        -3.0,  #assetSigma
                                                         -1.0,  #indexOpen
                                                         -1.0,  #indexHigh
                                                         -1.0,  #indexLow
@@ -84,11 +85,11 @@ class TradingEnv(gym.Env):
                                                         -1.0,  #indexKeltnerHigh
                                                         -1.0,  #indexKeltnerLow
                                                         -1.0,  #indexKeltnerMA
-                                                        -50.0, #indexMACDFast
-                                                        -50.0, #indexMACDSlow
+                                                        -1.0, #indexMACDFast
+                                                        -1.0, #indexMACDSlow
                                                         -5.0,  #indexSigma
                                                         -1.0,  #currentPosition
-                                                        0.0    #stopDistance
+                                                        #0.0    #stopDistance
                                                         ]),
                                             np.array([
                                                         1.0,  #assetOpen
@@ -98,9 +99,9 @@ class TradingEnv(gym.Env):
                                                         1.0,  #assetKeltnerHigh
                                                         1.0,  #assetKeltnerLow
                                                         1.0,  #assetKeltnerMA
-                                                        50.0, #assetMACDFast
-                                                        50.0, #assetMACDSlow
-                                                        5.0,  #assetSigma
+                                                        1.0, #assetMACDFast
+                                                        1.0, #assetMACDSlow
+                                                        3.0,  #assetSigma
                                                         1.0,  #indexOpen
                                                         1.0,  #indexHigh
                                                         1.0,  #indexLow
@@ -108,11 +109,11 @@ class TradingEnv(gym.Env):
                                                         1.0,  #indexKeltnerHigh
                                                         1.0,  #indexKeltnerLow
                                                         1.0,  #indexKeltnerMA
-                                                        50.0, #indexMACDFast
-                                                        50.0, #indexMACDSlow
+                                                        1.0, #indexMACDFast
+                                                        1.0, #indexMACDSlow
                                                         5.0,  #indexSigma
                                                         1.0,  #currentPosition
-                                                        1.0   #stopDistance
+                                                        #1.0   #stopDistance
                                                         ]))
 
 
@@ -134,6 +135,7 @@ class TradingEnv(gym.Env):
         self.num_trades = 0
         self.up_R = 0
         self.days_in= 0
+        self.entry_step = 0
         self.down_R= 0
         self.visualisation = None
         self.net_worths = [self.balance]
@@ -154,6 +156,8 @@ class TradingEnv(gym.Env):
         stationary_keltnerhigh = (current_row['assetKeltnerHigh'].values[1] / current_row['assetKeltnerHigh'].values[0]) - 1
         stationary_keltnerlow = (current_row['assetKeltnerLow'].values[1] / current_row['assetKeltnerLow'].values[0]) - 1
         stationary_keltnerma = (current_row['assetKeltnerMA'].values[1] / current_row['assetKeltnerMA'].values[0]) - 1
+        stationary_macdfast = (current_row['assetMACDFast'].values[1] / current_row['assetMACDFast'].values[0]) - 1
+        stationary_macdslow = (current_row['assetMACDSlow'].values[1] / current_row['assetMACDSlow'].values[0]) - 1
 
         index_stationary_open = (current_row['indexopen'].values[1] / current_row['indexopen'].values[0]) - 1
         index_stationary_high = (current_row['indexHigh'].values[1] / current_row['indexHigh'].values[0]) - 1
@@ -162,7 +166,8 @@ class TradingEnv(gym.Env):
         index_stationary_keltnerhigh = (current_row['indexKeltnerHigh'].values[1] / current_row['indexKeltnerHigh'].values[0]) - 1
         index_stationary_keltnerlow = (current_row['indexKeltnerLow'].values[1] / current_row['indexKeltnerLow'].values[0]) - 1
         index_stationary_keltnerma = (current_row['indexKeltnerMA'].values[1] / current_row['indexKeltnerMA'].values[0]) - 1
-        
+        index_stationary_macdfast = (current_row['indexMACDFast'].values[1] / current_row['indexMACDFast'].values[0]) - 1
+        index_stationary_macdslow = (current_row['indexMACDSlow'].values[1] / current_row['indexMACDSlow'].values[0]) - 1
 
         frame = np.array([
             stationary_open,
@@ -172,8 +177,8 @@ class TradingEnv(gym.Env):
             stationary_keltnerhigh,
             stationary_keltnerlow,
             stationary_keltnerma,
-            current_row['assetMACDFast'].values[1],
-            current_row['assetMACDSlow'].values[1],
+            stationary_macdfast,
+            stationary_macdslow,
             current_row['assetSigma'].values[1],
             index_stationary_open,
             index_stationary_high,
@@ -182,8 +187,8 @@ class TradingEnv(gym.Env):
             index_stationary_keltnerhigh,
             index_stationary_keltnerlow,
             index_stationary_keltnerma,
-            current_row['indexMACDFast'].values[1],
-            current_row['indexMACDSlow'].values[1],
+            index_stationary_macdfast,
+            index_stationary_macdslow,
             current_row['indexSigma'].values[1],
         ])
 
@@ -220,7 +225,11 @@ class TradingEnv(gym.Env):
             stop_normalised = (self.stop_value - self.df.loc[self.current_step, 'assetClose'])  / self.entry_atr
         else: stop_normalised = 0
 
-        obs = np.append(frame, np.array([self.positioning, stop_normalised]), axis = 0)
+        obs = np.append(frame, np.array(
+            [
+                self.positioning
+                #stop_normalised
+                ]), axis = 0)
         return obs
 
 
@@ -251,16 +260,15 @@ class TradingEnv(gym.Env):
         action_type = action[0]
         stop_movement = action[1]
         
-        if action_type > 0.33 and not self.currently_long and not self.currently_short:
-            self.entering_long = True
-        elif action_type < -0.33 and not self.currently_long and not self.currently_short:
+        #if action_type > 0.33 and not self.currently_long and not self.currently_short:
+        #    self.entering_long = True
+        if action_type < 0 and not self.currently_long and not self.currently_short:
             self.entering_short = True
         
         if self.currently_long:
             current_stop = self.stop_value
             current_close = self.df.loc[self.current_step, 'assetClose']
-            self.stop_value = current_stop +  (current_close - current_stop ) * stop_movement
-            
+            self.stop_value = current_stop +  (current_close - current_stop ) * stop_movement            
         elif self.currently_short:
             current_stop = self.stop_value
             current_close = self.df.loc[self.current_step, 'assetClose']
@@ -311,7 +319,7 @@ class TradingEnv(gym.Env):
             final_r = (self.entry_price - final_price) / self.entry_atr
             self.lifetime_r += final_r
             self.down_R += final_r
-            reward = final_r
+            reward = self.find_reward(final_price)
 
             self.trades.append({'step': self.current_step,
                     'r_value': final_r,
@@ -368,7 +376,19 @@ class TradingEnv(gym.Env):
             self.days_in += 1   
 
         return reward
-                
+
+
+     def find_reward(self, final_price):
+        
+        #Find first down peak from entrystep
+
+        first_peak = next(x for x, val in enumerate(self.df['assetTroughs'].values)
+                                                    if val < 0) 
+
+        max_price = self.df.loc[first_peak, 'assetLow']
+        total_swing = self.entry_price - max_price
+        return (self.entry_price - final_price) / total_swing
+
 
     def _render_to_file(self, filename='render.txt'):
         # Render the environment to the screen
